@@ -29,6 +29,7 @@ boolean OVERDRIVE;
 boolean MAX_OVERDRIVE;
 boolean EMP_ACTIVE;
 boolean CELL;
+boolean PROGRESSED;
 boolean WAITING = false;
 float playerSpeed;
 float playerDirection;
@@ -41,13 +42,19 @@ float s2;
 float d1;
 float d2;
 float startupTime;
+float speedMod;
 float speedMult;
 int fireSpeed;
 int fireTime;
+int progressionType;
 int overdriveTime;
 int cellTime;
 int cellSpawnTime;
-int asteroidCap = 30;
+int progressionTime;
+int progressionTimeStamp;
+int asteroidCap;
+int respawnTime;
+int respawnTimeMod;
 int respawnCooldown;
 int spawnZone;
 int score;
@@ -65,12 +72,17 @@ public void setup() {
   OVERDRIVE = false;
   cellTime = millis();
   cellSpawnTime = (int)random(15000,30000);
-  respawnCooldown = (int)random(5)+5;
+  respawnTime = millis();
+  respawnTimeMod = 1000;
+  respawnCooldown = (int)random(respawnTimeMod,100+respawnTimeMod);
   startupTime = 180;
   score = 0;
   energy = 0;
   charges = 0;
+  progressionTime = 0;
+  asteroidCap = 5;
   speedMult = 1;
+  speedMod = 0.5;
   size(986, 655);
   bullets = new ArrayList<Bullet>();
   asteroids = new ArrayList<Asteroid>();
@@ -99,7 +111,7 @@ public void setup() {
       asteroidDirection = (float)(135*Math.random()+45);
       break;
   }
-  asteroidSpeed = (float)(2*Math.random()+1);
+  asteroidSpeed = (float)(2*Math.random()+0.5);
   Asteroid asteroid = new Asteroid(asteroidX, asteroidY, asteroidSpeed, asteroidDirection, false);
   asteroids.add(asteroid);
   
@@ -178,6 +190,7 @@ public void draw() {
     }
     if (millis() - startupTime >= 3000) {
       STARTUP = false;
+      progressionTimeStamp = millis();
     }
   } else {
     for (int i=0; i<starField.length; i++) {
@@ -187,6 +200,14 @@ public void draw() {
       Bullet b = (Bullet)o;
       b.show();
       b.update();
+    }
+    if (millis() - progressionTimeStamp >= 1000) {
+      progressionTimeStamp = millis();
+      progressionTime++;
+    }
+    if (progressionTime >= 10) {
+      difficultyUp();
+      progressionTime = 0;
     }
     emp.show();
     if (EMP_ACTIVE) {
@@ -298,13 +319,10 @@ public void draw() {
       
     bulletCheck();
     checkCell();
-    if (respawnCooldown == 0 && asteroids.size() < asteroidCap) {
+    if (millis() - respawnTime >= respawnCooldown && asteroids.size() < asteroidCap) {
       if (!EMP_ACTIVE)
         asteroidRespawn();
-      respawnCooldown = (int)random(5)+5;
     }
-    if (respawnCooldown > 0)
-      respawnCooldown--;
     //Check for ship collision agaist asteroids
     for (int i=0; i<asteroids.size(); i++) {
       Asteroid a = asteroids.get(i);
@@ -389,8 +407,6 @@ void keyPressed() {
       ROTATE_RIGHT = true;
     } else if (keyCode == UP) {
       MOVE_FORWARD = true;
-    } else if (keyCode == SHIFT) {
-      spawnCell();
     }
   }
   if (key == 'z' || key == 'Z') {
@@ -480,7 +496,7 @@ void asteroidRespawn() {
         asteroidDirection = (float)(135*Math.random()+45);
         break;
     }
-    asteroidSpeed = (float)(2*Math.random()+1);
+    asteroidSpeed = (float)(2*Math.random()+speedMod);
     Asteroid asteroid = new Asteroid(asteroidX, asteroidY, asteroidSpeed, asteroidDirection, false);
     VALID_SPAWN = true;
     for (Asteroid a: asteroids) {
@@ -490,6 +506,8 @@ void asteroidRespawn() {
     }
     if (VALID_SPAWN) {
       asteroids.add(asteroid);
+      respawnTime = millis();
+      respawnCooldown = (int)random(respawnTimeMod,100+respawnTimeMod);
     }
   }
 }
@@ -528,6 +546,7 @@ void hitCheck() {
             }
           }
         }
+        progressionTime++;
         score++;
       }
     }
@@ -541,6 +560,28 @@ void hitCheck() {
       score++;
       asteroids.remove(i);
     }
+  }
+}
+
+void difficultyUp() {
+  PROGRESSED = false;
+  progressionType = (int)random(5);
+  if (progressionType == 0) {
+    speedMod += 0.1;
+    PROGRESSED = true;
+  } else if (progressionType == 1 || progressionType == 2) {
+    if (asteroidCap < 25) {
+      asteroidCap++;
+      PROGRESSED = true;
+    }
+  } else if (progressionType == 3 || progressionType == 4) {
+    if (respawnTimeMod > 0) {
+      respawnTimeMod -= 50;
+      PROGRESSED = true;
+    }
+  }
+  if (!PROGRESSED) {
+    difficultyUp();
   }
 }
 

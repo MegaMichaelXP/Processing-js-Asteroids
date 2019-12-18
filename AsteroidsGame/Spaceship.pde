@@ -83,7 +83,7 @@ class Spaceship extends Mover implements Movable {
   void update() {
     x = x + speed*(float)Math.cos(radians(direction));
     y = y + speed*(float)Math.sin(radians(direction));
-    if (shield > 0 && millis() - shieldTime >= 60000) {
+    if (shield > 0 && millis() - shieldTime >= 30000) {
       shield--;
       shieldTime = millis();
       if (shield == 0)
@@ -117,6 +117,7 @@ class Spaceship extends Mover implements Movable {
   }
   void shieldDown() {
     if (shield > 0) {
+      shieldTime = millis();
       shield--;
       if (shield == 0) {
         radius = 30;
