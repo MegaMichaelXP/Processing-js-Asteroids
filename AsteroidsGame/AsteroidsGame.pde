@@ -145,7 +145,7 @@ public void draw() {
     textSize(100);
     text("Asteroids",width/2,100);
     textSize(40);
-    text("AP Computer Science - Michael Vollmer",width/2,180);
+    text("Recreated by Michael Vollmer",width/2,180);
     fill(50);
     noStroke();
     rect(width/2,300,600,120);
